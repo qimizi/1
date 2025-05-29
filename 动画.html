@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>风扇旋转动画</title>
+  <style>
+    body {
+      background-color: #222;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    canvas {
+      background-color: #fff;
+      margin-bottom: 20px;
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      background-color: #2ea;
+      color: #000;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #1cb;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="fanCanvas" width="1600" height="600"></canvas>
+
+<div class="controls">
+  <button id="toggleBtn">启动风扇</button>
+  <button id="speedUpBtn">加速</button>
+  <button id="slowDownBtn">减速</button>
+</div>
+
+<script>
+  const canvas = document.getElementById('fanCanvas');
+  const ctx = canvas.getContext('2d');
+
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2 - 40;
+
+  let angle = 0;
+  let speed = 0.05;
+  let running = false;
+  let animationId = null;
+
+  const bladeImgs = [
+    new Image(),
+    new Image(),
+    new Image()
+  ];
+
+  const baseImg = new Image();
+  bladeImgs[0].src = 'image/1.png';
+  bladeImgs[1].src = 'image/2.png';
+  bladeImgs[2].src = 'image/3.png';
+  baseImg.src = 'image/柱子.png';
+
+  function drawFan() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 绘制柱子
+    ctx.save();
+    ctx.drawImage(baseImg, centerX - baseImg.width / 2, centerY - 40);
+    ctx.restore();
+
+    // 绘制扇叶
+    ctx.save();
+    ctx.translate(centerX, centerY);
+    ctx.rotate(angle);
+
+    for (let i = 0; i < 3; i++) {
+      ctx.save();
+      ctx.rotate((Math.PI * 2 / 3) * i);
+      ctx.drawImage(bladeImgs[i], -bladeImgs[i].width / 2, -100);
+      ctx.restore();
+    }
+
+    ctx.restore();
+  }
+
+  function animate() {
+    angle += speed;
+    drawFan();
+    animationId = requestAnimationFrame(animate);
+  }
+
+  function startFan() {
+    if (!running) {
+      running = true;
+      animate();
+      toggleBtn.textContent = '停止风扇';
+    }
+  }
+
+  function stopFan() {
+    if (running) {
+      running = false;
+      cancelAnimationFrame(animationId);
+      toggleBtn.textContent = '启动风扇';
+    }
+  }
+
+  // 按钮控制逻辑
+  const toggleBtn = document.getElementById('toggleBtn');
+  const speedUpBtn = document.getElementById('speedUpBtn');
+  const slowDownBtn = document.getElementById('slowDownBtn');
+
+  toggleBtn.addEventListener('click', () => {
+    running ? stopFan() : startFan();
+  });
+
+  speedUpBtn.addEventListener('click', () => {
+    speed += 0.01;
+  });
+
+  slowDownBtn.addEventListener('click', () => {
+    speed = Math.max(0.01, speed - 0.01);
+  });
+
+  // 加载图片再开始绘制
+  let loaded = 0;
+  const total = bladeImgs.length + 1;
+
+  [...bladeImgs, baseImg].forEach(img => {
+    img.onload = () => {
+      loaded++;
+      if (loaded === total) {
+        drawFan(); // 初始静止状态
+      }
+    };
+  });
+</script>
+
+</body>
+</html>
